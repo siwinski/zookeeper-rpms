@@ -1,25 +1,32 @@
-%define _noarch_libdir /usr/lib 
+%define _noarch_libdir /usr/lib
 %define rel_ver 3.4.6
 
-Summary: High-performance coordination service for distributed applications.
-Name: zookeeper
-Version: %{rel_ver}
-Release: 2
-License: Apache License v2.0
-Group: Applications/Databases
-URL: http://hadoop.apache.org/zookeeper/
-Source0: http://mirror.cogentco.com/pub/apache/zookeeper/zookeeper-%{rel_ver}/zookeeper-%{rel_ver}.tar.gz
-Source1: zookeeper.init
-Source2: zookeeper.logrotate
-Source3: zoo.cfg
-Source4: log4j.properties
-Source5: java.env
-BuildRoot: %{_tmppath}/%{name}-%{rel_ver}-%{release}-root
-BuildRequires: python-devel,gcc,make,libtool,autoconf,cppunit-devel
-Requires: logrotate, java, nc
+%define _zookeeper_noarch_libdir %{_noarch_libdir}/zookeeper
+%define _maindir %{buildroot}%{_zookeeper_noarch_libdir}
+
+Name:           zookeeper
+Version:        %{rel_ver}
+Release:        2
+Summary:        High-performance coordination service for distributed applications.
+
+Group:          Applications/Databases
+License:        Apache License v2.0
+URL:            http://hadoop.apache.org/zookeeper/
+
+Source0:        http://mirror.cogentco.com/pub/apache/zookeeper/zookeeper-%{rel_ver}/zookeeper-%{rel_ver}.tar.gz
+Source1:        zookeeper.init
+Source2:        zookeeper.logrotate
+Source3:        zoo.cfg
+Source4:        log4j.properties
+Source5:        java.env
+
+BuildRoot:      %{_tmppath}/%{name}-%{rel_ver}-%{release}-root
+BuildRequires:  python-devel,gcc,make,libtool,autoconf,cppunit-devel
+
+Requires:       logrotate, java, nc
 Requires(post): chkconfig initscripts
-Requires(pre): chkconfig initscripts
-AutoReqProv: no
+Requires(pre):  chkconfig initscripts
+AutoReqProv:    no
 
 %description
 ZooKeeper is a distributed, open-source coordination service for distributed
@@ -35,11 +42,10 @@ prone to errors such as race conditions and deadlock. The motivation behind
 ZooKeeper is to relieve distributed applications the responsibility of
 implementing coordination services from scratch.
 
-%define _zookeeper_noarch_libdir %{_noarch_libdir}/zookeeper
-%define _maindir %{buildroot}%{_zookeeper_noarch_libdir}
 
 %prep
 %setup -q -n zookeeper-%{rel_ver}
+
 
 %build
 pushd src/c
@@ -55,6 +61,7 @@ autoreconf
 %configure
 %{__make} %{?_smp_mflags}
 popd
+
 
 %install
 rm -rf %{buildroot}
@@ -78,8 +85,10 @@ install -p -d -D -m 0755 %{buildroot}%{_datadir}/zookeeper
 
 %{makeinstall} -C src/c
 
+
 %clean
 rm -rf %{buildroot}
+
 
 %files
 %defattr(-,root,root,-)
@@ -96,23 +105,27 @@ rm -rf %{buildroot}
 %{_bindir}/cli_st
 %{_bindir}/load_gen
 
+
 # ------------------------------ libzookeeper ------------------------------
 
+
 %package -n libzookeeper
+
 Summary: C client interface to zookeeper server
 Group: Development/Libraries
 BuildRequires: gcc
 
 %description -n libzookeeper
 The client supports two types of APIs -- synchronous and asynchronous.
- 
+
 Asynchronous API provides non-blocking operations with completion callbacks and
 relies on the application to implement event multiplexing on its behalf.
- 
+
 On the other hand, Synchronous API provides a blocking flavor of
 zookeeper operations and runs its own event loop in a separate thread.
- 
+
 Sync and Async APIs can be mixed and matched within the same application.
+
 
 %files -n libzookeeper
 %defattr(-, root, root, -)
@@ -120,7 +133,9 @@ Sync and Async APIs can be mixed and matched within the same application.
 %{_libdir}/libzookeeper_mt.so.*
 %{_libdir}/libzookeeper_st.so.*
 
+
 # ------------------------------ libzookeeper-devel ------------------------------
+
 
 %package -n libzookeeper-devel
 Summary: Headers and static libraries for libzookeeper
@@ -131,6 +146,7 @@ Requires: gcc
 This package contains the libraries and header files needed for
 developing with libzookeeper.
 
+
 %files -n libzookeeper-devel
 %defattr(-, root, root, -)
 %{_includedir}
@@ -138,13 +154,16 @@ developing with libzookeeper.
 %{_libdir}/*.la
 %{_libdir}/*.so
 
+
 %pre
 getent group zookeeper >/dev/null || groupadd -r zookeeper
 getent passwd zookeeper >/dev/null || useradd -r -g zookeeper -d / -s /sbin/nologin zookeeper
 exit 0
 
+
 %post
 /sbin/chkconfig --add zookeeper
+
 
 %preun
 if [ $1 = 0 ] ; then
@@ -152,15 +171,19 @@ if [ $1 = 0 ] ; then
     /sbin/chkconfig --del zookeeper
 fi
 
+
 %postun
 if [ "$1" -ge "1" ] ; then
     /sbin/service zookeeper condrestart >/dev/null 2>&1 || :
 fi
 
+
 %changelog
 * Mon Dec 8 2014 David Xie <david.scriptfan@gmail.com> - 3.4.6-1
 - Bump version to 3.4.6
+
 * Thu May 30 2013 Sam Kottler <shk@linux.com> - 3.4.5-1
 - Updated to 3.4.5
+
 * Tue Oct 2 2012 Sam Kottler <sam@kottlerdevelopment.com> - 3.3.2-1
 - Initialize package creation
